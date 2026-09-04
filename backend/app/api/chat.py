@@ -98,24 +98,39 @@ async def chat_stream(
         retriever = TranscriptRetriever(session=db)
         chunks = await retriever.retrieve_relevant_chunks(payload.message)
 
-        # Out-of-Domain Refusal Gate
+        # Out-of-Domain Refusal Gate (with friendly greeting support)
         if not chunks:
-            refusal_text = (
-                "I do not have sufficient information in Lenny's podcast archive to answer this. "
-                "My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, "
-                "Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, "
-                "product strategy, retention, growth teams, or pricing."
-            )
-            # Yield refusal tokens
-            for word in refusal_text.split(" "):
+            greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "who are you", "what can you do", "help"}
+            clean_msg = payload.message.lower().strip().strip("!.,?")
+            if clean_msg in greetings or any(clean_msg.startswith(g) for g in ["hi ", "hello ", "hey "]):
+                response_text = (
+                    "Hello! I am **The Lenny Growth Assistant**—your operational AI partner for product management and growth strategy. "
+                    "I am strictly grounded in *Lenny's Podcast* transcripts (featuring guests like Adam Fishman, Elena Verna, Shreyas Doshi, "
+                    "Brian Chesky, and Gustaf Alströmer).\n\n"
+                    "Here is what you can ask me to do:\n"
+                    "- **Grounded Advice:** Ask about onboarding funnels, viral growth loops, or hiring growth teams.\n"
+                    "- **Ship 30 for 30:** Switch to essay mode to generate structured, 1,250-word executive memos.\n"
+                    "- **Interactive Artifacts:** Request live HTML calculators, widgets, or frameworks.\n\n"
+                    "What growth or product challenge are you tackling today?"
+                )
+            else:
+                response_text = (
+                    "I do not have sufficient information in Lenny's podcast archive to answer this. "
+                    "My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, "
+                    "Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, "
+                    "product strategy, retention, growth teams, or pricing."
+                )
+
+            # Yield tokens
+            for word in response_text.split(" "):
                 yield f"data: {json.dumps({'type': 'token', 'content': word + ' '})}\n\n"
 
-            # Persist refusal assistant message using a fresh session
+            # Persist assistant message
             async with AsyncSessionLocal() as save_db:
                 asst_msg = Message(
                     session_id=payload.session_id,
                     role="assistant",
-                    content=refusal_text,
+                    content=response_text,
                     sources=[]
                 )
                 save_db.add(asst_msg)
