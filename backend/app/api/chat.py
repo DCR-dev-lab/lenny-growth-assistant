@@ -91,35 +91,71 @@ async def chat_stream(
 
     # 4. Asynchronous Event Generator for SSE Stream
     async def event_generator():
-        # Yield status event
+        # 1. Immediate conversational greeting & capability question check
+        clean_msg = payload.message.lower().strip().strip("!.,?").replace("'", "")
+        greeting_words = {"hi", "hello", "hey", "sup", "howdy", "good morning", "good afternoon", "greetings"}
+        capability_patterns = [
+            "what can you do",
+            "what you can do",
+            "who are you",
+            "how can you help",
+            "what do you do",
+            "how does this work",
+            "capabilities",
+            "features",
+            "help me",
+            "what are you",
+            "tell me about yourself",
+        ]
+        is_greeting = clean_msg in greeting_words or any(clean_msg.startswith(g + " ") for g in ["hi", "hello", "hey"])
+        is_capability = any(p in clean_msg for p in capability_patterns)
+
+        if is_greeting or is_capability:
+            welcome_text = (
+                "Hello! I am **The Lenny Growth Assistant**—your operational AI partner for product management and growth strategy. "
+                "I am strictly grounded in *Lenny's Podcast* transcripts (featuring guests like Adam Fishman, Elena Verna, Shreyas Doshi, "
+                "Brian Chesky, and Gustaf Alströmer).\n\n"
+                "Here is what I can do for you:\n"
+                "1. **Grounded Tactical Answers:** Retrieve battle-tested advice on onboarding, activation, retention loops, and team topology with exact timestamps and citations `[Episode: Guest, Timestamp]`.\n"
+                "2. **Ship 30 for 30 Content Engine:** Transform podcast insights into high-retention, ~1,250-word executive essays with sharp hooks, skimmable paragraphs, and operational checklists.\n"
+                "3. **Claude-Style Interactive Artifacts:** Build and preview live, sandboxed HTML/CSS/JS tools (e.g. viral growth calculators, retention models, funnel simulators).\n\n"
+                "Try asking me:\n"
+                "- *'What does Adam Fishman say about onboarding as a growth lever?'*\n"
+                "- *'Generate an interactive HTML growth loop calculator'* (opens the side-by-side viewer!)\n"
+                "- *'Write a Ship 30 for 30 essay on Elena Verna's B2B growth loops'*\n\n"
+                "What would you like to explore?"
+            )
+            for word in welcome_text.split(" "):
+                yield f"data: {json.dumps({'type': 'token', 'content': word + ' '})}\n\n"
+
+            async with AsyncSessionLocal() as save_db:
+                asst_msg = Message(
+                    session_id=payload.session_id,
+                    role="assistant",
+                    content=welcome_text,
+                    sources=[]
+                )
+                save_db.add(asst_msg)
+                await save_db.commit()
+
+            yield "data: [DONE]\n\n"
+            return
+
+        # 2. Yield status event and execute knowledge retrieval
         status_payload = json.dumps({"type": "status", "content": "Searching Lenny's Podcast archive..."})
         yield f"data: {status_payload}\n\n"
 
         retriever = TranscriptRetriever(session=db)
         chunks = await retriever.retrieve_relevant_chunks(payload.message)
 
-        # Out-of-Domain Refusal Gate (with friendly greeting support)
+        # Out-of-Domain Refusal Gate
         if not chunks:
-            greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "who are you", "what can you do", "help"}
-            clean_msg = payload.message.lower().strip().strip("!.,?")
-            if clean_msg in greetings or any(clean_msg.startswith(g) for g in ["hi ", "hello ", "hey "]):
-                response_text = (
-                    "Hello! I am **The Lenny Growth Assistant**—your operational AI partner for product management and growth strategy. "
-                    "I am strictly grounded in *Lenny's Podcast* transcripts (featuring guests like Adam Fishman, Elena Verna, Shreyas Doshi, "
-                    "Brian Chesky, and Gustaf Alströmer).\n\n"
-                    "Here is what you can ask me to do:\n"
-                    "- **Grounded Advice:** Ask about onboarding funnels, viral growth loops, or hiring growth teams.\n"
-                    "- **Ship 30 for 30:** Switch to essay mode to generate structured, 1,250-word executive memos.\n"
-                    "- **Interactive Artifacts:** Request live HTML calculators, widgets, or frameworks.\n\n"
-                    "What growth or product challenge are you tackling today?"
-                )
-            else:
-                response_text = (
-                    "I do not have sufficient information in Lenny's podcast archive to answer this. "
-                    "My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, "
-                    "Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, "
-                    "product strategy, retention, growth teams, or pricing."
-                )
+            response_text = (
+                "I do not have sufficient information in Lenny's podcast archive to answer this. "
+                "My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, "
+                "Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, "
+                "product strategy, retention, growth teams, or pricing."
+            )
 
             # Yield tokens
             for word in response_text.split(" "):
