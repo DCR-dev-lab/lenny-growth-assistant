@@ -141,74 +141,90 @@ export default function Home() {
           sidebarOpen ? "w-64" : "w-0 border-r-0 overflow-hidden"
         }`}
       >
-        <div className="p-3 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-brand-600 flex items-center justify-center text-white font-bold text-xs">
+        {/* Brand Header */}
+        <div className="p-3.5 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-brand-700 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
               L
             </div>
-            <span className="font-bold text-xs text-slate-800 tracking-tight">Lenny Assistant</span>
+            <div>
+              <span className="font-bold text-xs text-slate-900 tracking-tight block leading-none">Lenny Assistant</span>
+              <span className="text-[10px] text-brand-600 font-medium">Forward Deployed v1.0</span>
+            </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100"
+            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
             title="Collapse sidebar"
           >
             <PanelLeftClose className="w-4 h-4" />
           </button>
         </div>
 
+        {/* New Chat Button */}
         <div className="p-3">
           <button
             onClick={handleNewSession}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-2xs transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer hover:shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>New Chat</span>
+            <span>New Conversation</span>
           </button>
         </div>
 
+        {/* Session List */}
         <div className="flex-1 overflow-y-auto px-2 space-y-1">
-          <div className="px-2 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Conversations
           </div>
-          {sessions.map((s) => {
-            const isSelected = s.id === currentSessionId;
-            return (
-              <div
-                key={s.id}
-                onClick={() => selectSession(s.id)}
-                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${
-                  isSelected
-                    ? "bg-brand-50 text-brand-900 font-semibold"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-brand-600" : "text-slate-400"}`} />
-                  <span className="truncate">{s.title || "New Conversation"}</span>
-                </div>
-                <button
-                  onClick={(e) => handleDeleteSession(e, s.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded transition-opacity"
-                  title="Delete chat"
+          {sessions.length === 0 ? (
+            <div className="px-3 py-4 text-center text-xs text-slate-400">
+              No conversations yet.
+            </div>
+          ) : (
+            sessions.map((s) => {
+              const isSelected = s.id === currentSessionId;
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => selectSession(s.id)}
+                  className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-brand-50 text-brand-900 font-bold shadow-2xs border border-brand-200/70"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent"
+                  }`}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            );
-          })}
+                  <div className="flex items-center gap-2.5 truncate min-w-0 pr-1">
+                    <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-brand-600" : "text-slate-400"}`} />
+                    <span className="truncate">{s.title || "New Conversation"}</span>
+                  </div>
+                  <button
+                    onClick={(e) => handleDeleteSession(e, s.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-md transition-opacity"
+                    title="Delete chat"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Ingestion & DB Status footer */}
-        <div className="p-3 border-t border-slate-200 text-[11px] text-slate-500 bg-slate-50/50">
+        <div className="p-3 border-t border-slate-200 text-[11px] text-slate-500 bg-slate-50/70 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Vector Knowledge</span>
+            <span className="flex items-center gap-1.5 font-medium text-slate-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 live-pulse-dot" />
+              <span>pgvector Archive</span>
             </span>
-            <span className="font-mono text-[10px] bg-slate-200 px-1.5 py-0.5 rounded">
-              {healthData?.pgvector?.chunk_count || "8 Episodes"}
+            <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded">
+              {healthData?.pgvector?.chunk_count || 293} chunks
             </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+            <span>PostgreSQL 16</span>
+            <span>BGE 384d</span>
           </div>
         </div>
       </div>
@@ -217,8 +233,8 @@ export default function Home() {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="absolute left-3 top-3 z-30 p-2 bg-white border border-slate-200 rounded-lg shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
-          title="Open sidebar"
+          className="absolute left-3 top-3 z-30 p-2 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
+          title="Open conversation list"
         >
           <PanelLeft className="w-4 h-4" />
         </button>
