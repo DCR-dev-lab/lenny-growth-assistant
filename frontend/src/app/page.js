@@ -61,10 +61,19 @@ export default function Home() {
         }
       });
       if (allArtifacts.length > 0) {
-        setActiveArtifact(allArtifacts[allArtifacts.length - 1]);
+        handleOpenArtifact(allArtifacts[allArtifacts.length - 1]);
       }
     } catch (err) {
       console.error("Failed to fetch session detail:", err);
+    }
+  };
+
+  const handleOpenArtifact = (art) => {
+    setActiveArtifact(art);
+    // When viewing canvas side-by-side on typical desktop/laptop screens,
+    // auto-collapse sidebar so Chat and Canvas have comfortable room
+    if (typeof window !== "undefined" && window.innerWidth < 1360) {
+      setSidebarOpen(false);
     }
   };
 
@@ -105,7 +114,7 @@ export default function Home() {
       loadSessions(); // refresh session titles
     },
     onArtifactReceived: (art) => {
-      setActiveArtifact(art);
+      handleOpenArtifact(art);
     },
   });
 
@@ -229,19 +238,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Reopen Sidebar Toggle when collapsed */}
-      {!sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="absolute left-3 top-3 z-30 p-2 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
-          title="Open conversation list"
-        >
-          <PanelLeft className="w-4 h-4" />
-        </button>
-      )}
-
       {/* Main Center Area: Chat Pane */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
         <ChatPane
           messages={messages}
           isStreaming={isStreaming}
@@ -249,12 +247,15 @@ export default function Home() {
           streamStatus={streamStatus}
           currentSources={currentSources}
           onSendMessage={handleSendMessage}
-          onOpenArtifact={(art) => setActiveArtifact(art)}
+          onOpenArtifact={handleOpenArtifact}
           currentProvider={currentProvider}
           onSelectProvider={setCurrentProvider}
           healthData={healthData}
           currentMode={currentMode}
           onChangeMode={setCurrentMode}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          isArtifactOpen={!!activeArtifact}
         />
       </main>
 

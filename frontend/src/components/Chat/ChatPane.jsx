@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, BookOpen, PenTool, Loader2, Radio, Database, Zap, Rocket, FileText, Calculator, ShieldAlert } from "lucide-react";
+import { Send, Sparkles, BookOpen, PenTool, Loader2, Radio, Database, Zap, Rocket, FileText, Calculator, ShieldAlert, PanelLeft } from "lucide-react";
 import MessageItem from "./MessageItem";
 import ModelSelector from "./ModelSelector";
 
@@ -68,6 +68,9 @@ export default function ChatPane({
   healthData,
   currentMode,
   onChangeMode,
+  sidebarOpen,
+  onToggleSidebar,
+  isArtifactOpen,
 }) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
@@ -101,61 +104,80 @@ export default function ChatPane({
   const chunkCount = healthData?.pgvector?.chunk_count || 293;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 relative flex-1 overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-50 relative flex-1 overflow-hidden min-w-0">
       {/* Top Header */}
-      <header className="h-14 bg-white border-b border-slate-200/80 px-4 flex items-center justify-between shrink-0 shadow-2xs z-10">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-700 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              <Radio className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold text-slate-900 leading-none">The Lenny Growth Assistant</h1>
-                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 live-pulse-dot" />
-                  <span>{chunkCount} Chunks (HNSW)</span>
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">Operational PM &amp; Growth Intelligence</p>
-            </div>
+      <header className="h-14 bg-white border-b border-slate-200/80 px-3 sm:px-4 flex items-center justify-between shrink-0 shadow-2xs z-10 gap-2 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
+          {/* Reopen Sidebar Toggle when collapsed - integrated directly in navbar with zero overlap */}
+          {!sidebarOpen && (
+            <button
+              onClick={onToggleSidebar}
+              className="p-1.5 text-slate-500 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 shadow-2xs transition-all cursor-pointer shrink-0 mr-0.5"
+              title="Open conversation sidebar"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Logo Badge */}
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-700 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0">
+            <Radio className="w-4 h-4 text-white" />
           </div>
 
-          {/* Mode Selector Pill */}
-          <div className="hidden sm:flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 ml-4 text-xs">
-            <button
-              onClick={() => onChangeMode("default")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-                currentMode === "default"
-                  ? "bg-white text-brand-700 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-              title="Standard conversational QA with strict citations"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Grounded QA
-            </button>
-            <button
-              onClick={() => onChangeMode("ship30")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-                currentMode === "ship30"
-                  ? "bg-white text-brand-700 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-              title="High-retention ~1,250-word essay adhering to Ship 30 for 30 heuristics"
-            >
-              <PenTool className="w-3.5 h-3.5" />
-              Ship 30 for 30
-            </button>
+          {/* Title & Status */}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-sm font-bold text-slate-900 leading-none truncate">
+                {isArtifactOpen ? "Lenny Assistant" : "The Lenny Growth Assistant"}
+              </h1>
+              <span className={`${isArtifactOpen ? "hidden 2xl:inline-flex" : "hidden sm:inline-flex"} items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 live-pulse-dot" />
+                <span>{chunkCount} Chunks</span>
+              </span>
+            </div>
+            <p className={`${isArtifactOpen ? "hidden" : "hidden xl:block"} text-[11px] text-slate-500 mt-0.5 truncate`}>
+              Operational PM &amp; Growth Intelligence
+            </p>
           </div>
+
+          {/* Mode Selector Pill - shown when plenty of space is available; quick toggle always available in prompt bar */}
+          {!isArtifactOpen && (
+            <div className="hidden xl:flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 ml-2 text-xs shrink-0">
+              <button
+                onClick={() => onChangeMode("default")}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  currentMode === "default"
+                    ? "bg-white text-brand-700 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+                title="Standard conversational QA with strict citations"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Grounded QA</span>
+              </button>
+              <button
+                onClick={() => onChangeMode("ship30")}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  currentMode === "ship30"
+                    ? "bg-white text-brand-700 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+                title="High-retention ~1,250-word essay adhering to Ship 30 for 30 heuristics"
+              >
+                <PenTool className="w-3.5 h-3.5" />
+                <span>Ship 30</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Model Selector & Health Status */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <ModelSelector
             currentProvider={currentProvider}
             onSelectProvider={onSelectProvider}
             healthData={healthData}
+            compact={isArtifactOpen}
           />
         </div>
       </header>
@@ -311,13 +333,13 @@ export default function ChatPane({
               </button>
             </div>
           </form>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
-            <span>
-              Mode: <strong className="text-slate-700 font-semibold">{currentMode === "ship30" ? "Ship 30 for 30 Essay" : "Grounded QA"}</strong> &bull; Press <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Enter</kbd> to send, <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Shift+Enter</kbd> for newline
+          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1 gap-2 min-w-0">
+            <span className="truncate">
+              Mode: <strong className="text-slate-700 font-semibold">{currentMode === "ship30" ? "Ship 30 for 30" : "Grounded QA"}</strong> &bull; <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Enter</kbd> sends
             </span>
-            <span className="flex items-center gap-1">
+            <span className={`${isArtifactOpen ? "hidden 2xl:flex" : "hidden sm:flex"} items-center gap-1 shrink-0 text-slate-400`}>
               <Zap className="w-3 h-3 text-amber-500" />
-              <span>Attributed citations &bull; Strict refusal on unverified queries</span>
+              <span>Strict citations &bull; Guardrails</span>
             </span>
           </div>
         </div>

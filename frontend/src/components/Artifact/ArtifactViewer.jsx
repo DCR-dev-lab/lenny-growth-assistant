@@ -51,24 +51,24 @@ export default function ArtifactViewer({ artifact, onClose }) {
   return (
     <aside
       aria-label="Claude Artifact Canvas"
-      className={`flex flex-col bg-slate-100 border-l border-slate-200 transition-all duration-200 z-30 ${
+      className={`flex flex-col bg-slate-100 border-l border-slate-200 transition-all duration-200 z-30 shrink-0 ${
         isFullscreen
           ? "fixed inset-0 z-50 w-full h-full"
-          : "w-full md:w-[50%] lg:w-[46%] h-full relative shadow-lg"
+          : "w-full md:w-[48%] lg:w-[46%] xl:w-[45%] min-w-[340px] max-w-4xl h-full relative shadow-lg"
       }`}
     >
       {/* Top Action Bar */}
-      <div className="h-14 bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-brand-100 text-brand-800 border border-brand-200 shrink-0">
-            {isHtml ? "HTML Canvas" : "Markdown Memo"}
+      <div className="h-14 bg-white border-b border-slate-200 px-3 sm:px-4 flex items-center justify-between shrink-0 gap-2 min-w-0">
+        <div className="flex items-center gap-2 overflow-hidden min-w-0">
+          <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-brand-100 text-brand-800 border border-brand-200 shrink-0">
+            {isHtml ? "HTML Canvas" : "Markdown"}
           </span>
-          <h2 className="text-xs font-bold text-slate-900 truncate max-w-[200px]" title={artifact.title}>
+          <h2 className="text-xs font-bold text-slate-900 truncate" title={artifact.title}>
             {artifact.title || "Generated Artifact"}
           </h2>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 shrink-0">
           {/* Tab Switcher for HTML artifacts */}
           {isHtml && (
             <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 mr-2 text-xs">

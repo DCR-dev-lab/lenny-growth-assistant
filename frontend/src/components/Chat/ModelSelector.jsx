@@ -38,7 +38,7 @@ const PROVIDERS = [
   },
 ];
 
-export default function ModelSelector({ currentProvider, onSelectProvider, healthData }) {
+export default function ModelSelector({ currentProvider, onSelectProvider, healthData, compact = false }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selected = PROVIDERS.find((p) => p.id === currentProvider) || PROVIDERS[0];
@@ -46,22 +46,40 @@ export default function ModelSelector({ currentProvider, onSelectProvider, healt
 
   const isOllamaOnline = healthData?.llm_providers?.ollama?.available;
 
+  // Short label when space is constrained
+  const getShortName = (id) => {
+    switch (id) {
+      case "ollama":
+        return "Ollama (3.2)";
+      case "claude":
+        return "Claude";
+      case "openai":
+        return "GPT-4o";
+      case "mock":
+        return "Demo Mode";
+      default:
+        return "LLM";
+    }
+  };
+
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/80 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/80 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 shrink-0"
         title="Switch LLM runtime provider"
       >
-        <div className="w-5 h-5 rounded-md bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
+        <div className="w-5 h-5 rounded-md bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 shrink-0">
           <Icon className="w-3 h-3" />
         </div>
-        <div className="flex flex-col text-left">
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-slate-800 tracking-tight">{selected.name}</span>
+        <div className="flex flex-col text-left min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`font-bold text-slate-800 tracking-tight truncate ${compact ? "max-w-[90px] sm:max-w-[120px]" : "max-w-[130px] sm:max-w-none"}`}>
+              {compact ? getShortName(selected.id) : selected.name}
+            </span>
             {selected.id === "ollama" && (
               <span
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2 h-2 rounded-full shrink-0 ${
                   isOllamaOnline ? "bg-emerald-500 live-pulse-dot" : "bg-amber-500"
                 }`}
                 title={isOllamaOnline ? "Ollama running & connected" : "Ollama offline (mock fallback active)"}
@@ -69,7 +87,7 @@ export default function ModelSelector({ currentProvider, onSelectProvider, healt
             )}
           </div>
         </div>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
