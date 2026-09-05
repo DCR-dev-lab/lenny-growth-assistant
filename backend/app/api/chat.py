@@ -93,22 +93,34 @@ async def chat_stream(
     async def event_generator():
         # 1. Immediate conversational greeting & capability question check
         clean_msg = payload.message.lower().strip().strip("!.,?").replace("'", "")
-        greeting_words = {"hi", "hello", "hey", "sup", "howdy", "good morning", "good afternoon", "greetings"}
-        capability_patterns = [
+        greeting_words = {
+            "hi", "hello", "hey", "sup", "howdy", "good morning", "good afternoon", "greetings",
+            "how are you", "how are you doing", "hows it going", "how is it going"
+        }
+        identity_patterns = [
+            "your name",
+            "who are you",
+            "what are you",
+            "what is your name",
+            "whats your name",
+            "what your name",
+            "who created you",
+            "who built you",
+            "who made you",
+            "introduce yourself",
+            "what is this",
             "what can you do",
             "what you can do",
-            "who are you",
             "how can you help",
             "what do you do",
             "how does this work",
             "capabilities",
             "features",
             "help me",
-            "what are you",
             "tell me about yourself",
         ]
         is_greeting = clean_msg in greeting_words or any(clean_msg.startswith(g + " ") for g in ["hi", "hello", "hey"])
-        is_capability = any(p in clean_msg for p in capability_patterns)
+        is_capability = any(p in clean_msg for p in identity_patterns)
 
         if is_greeting or is_capability:
             welcome_text = (
