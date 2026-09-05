@@ -26,6 +26,19 @@ async def lifespan(app: FastAPI):
     """Lifecycle manager for startup and shutdown routines."""
     logger.info("Initializing The Lenny Growth Assistant backend service...")
     await init_db()
+    
+    # Preload Ollama model into memory in a non-blocking background task
+    import asyncio
+    async def warmup_ollama():
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                await client.post(f"{settings.OLLAMA_BASE_URL}/api/generate", json={"model": settings.OLLAMA_MODEL})
+                logger.info("Ollama model preload successful: model is warm in RAM.")
+        except Exception as e:
+            logger.debug(f"Ollama warm-up notice: {e}")
+    asyncio.create_task(warmup_ollama())
+
     logger.info("Backend service startup completed.")
     yield
     logger.info("Shutting down backend service.")

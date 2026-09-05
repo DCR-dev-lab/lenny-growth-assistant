@@ -37,7 +37,7 @@ class ResilientMockProvider(BaseLLMProvider):
 
         # Construct realistic grounded response based on context in system prompt
         if is_ship30:
-            essay = self._build_ship30_essay(user_query)
+            essay = self._build_ship30_essay(user_query, system_prompt)
             for word in essay.split(" "):
                 yield word + " "
                 await asyncio.sleep(0.015)
@@ -52,62 +52,104 @@ class ResilientMockProvider(BaseLLMProvider):
                 yield word + " "
                 await asyncio.sleep(0.02)
 
+    def _parse_chunks_from_prompt(self, system_prompt: str) -> List[Dict[str, str]]:
+        import re
+        pattern = r"--- Episode:\s*(.*?)\s*\(Guest:\s*(.*?),\s*Timestamp:\s*(.*?)\)\s*---\n(.*?)(?=(?:--- Episode:|$))"
+        matches = re.findall(pattern, system_prompt, re.DOTALL)
+        chunks = []
+        for m in matches:
+            chunks.append({
+                "episode": m[0].strip(),
+                "guest": m[1].strip(),
+                "timestamp": m[2].strip(),
+                "text": m[3].strip()
+            })
+        return chunks
+
     def _build_grounded_response(self, query: str, system_prompt: str) -> str:
-        pm_keywords = ["onboarding", "growth", "pm", "product", "retention", "activation", "churn", "pricing", "loop", "funnel", "shreyas", "adam", "fishman", "elena", "brian", "interview", "team", "metric", "framework", "lno", "viral", "calculator", "strategy", "startup", "yc", "airbnb", "reforge"]
-        if not any(k in query.lower() for k in pm_keywords) or "no sufficient context" in system_prompt.lower():
-            return "I do not have sufficient information in Lenny's podcast archive to answer this. My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, product strategy, retention, growth teams, or pricing."
+        chunks = self._parse_chunks_from_prompt(system_prompt)
+        
+        # Strict Refusal if no context chunks exist or explicit out-of-domain
+        if not chunks or "no sufficient context" in system_prompt.lower():
+            return (
+                "I do not have sufficient information in Lenny's podcast archive to answer this. "
+                "My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, "
+                "Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, "
+                "product strategy, retention, growth teams, or pricing."
+            )
+
+        primary = chunks[0]
+        guest = primary["guest"]
+        ep_name = primary["episode"]
+        ts = primary["timestamp"]
+
+        # Extract meaningful snippet sentences
+        clean_snippets = []
+        for c in chunks:
+            lines = [l.strip() for l in c["text"].split("\n") if l.strip() and not l.startswith("Lenny Rachitsky (")]
+            for l in lines:
+                # Remove speaker label
+                text_content = re.sub(r"^[A-Za-z\s]+(?:\([\d:]+\))?:\s*", "", l)
+                if len(text_content) > 35 and not text_content.startswith("http"):
+                    clean_snippets.append((c["guest"], c["timestamp"], text_content))
+
+        # Build dynamic, tailored response based on retrieved guest
+        tactical_bullets = []
+        seen = set()
+        for g, t, snip in clean_snippets[:3]:
+            short = snip[:180].rstrip(".")
+            if short not in seen:
+                seen.add(short)
+                tactical_bullets.append(f"- **Tactical Insight:** \"{short}...\" [Episode: {g}, Timestamp: {t}]")
+
+        if not tactical_bullets:
+            tactical_bullets.append(f"- **Key Takeaway:** {primary['text'][:220]}... [Episode: {guest}, Timestamp: {ts}]")
+
+        bullets_text = "\n".join(tactical_bullets)
 
         return (
-            f"Based on the discussions from Lenny's Podcast archive, here are the key operational insights regarding **{query}**:\n\n"
-            "### 1. The Core Principle\n"
-            "Onboarding and growth loops are foundational to user retention. As **Adam Fishman** emphasizes: "
-            "*'Onboarding is the only part of your product experience that 100% of people are ever going to touch. "
-            "Good luck getting 100% feature adoption of anything else in your product.'* "
-            "[Episode: Adam Fishman, Timestamp: 00:00:00]\n\n"
-            "### 2. Tactical Execution\n"
-            "- **Align Brand Promise with Product Delivery:** Your marketing creates expectations, but onboarding delivers on that promise. "
-            "Any mismatch results in immediate churn [Episode: Adam Fishman, Timestamp: 00:00:00].\n"
-            "- **Product-Led Growth Loops:** Elena Verna highlights that sustainable B2B growth requires transforming users into organic distribution vectors rather than relying solely on paid acquisition [Episode: Elena Verna, Timestamp: 00:01:20].\n"
-            "- **High-Agency Ownership:** Shreyas Doshi advises PMs to distinguish between 'Heavy, Medium, and Light' tasks (the LNO framework) to avoid operational burnout while scaling high-impact bets [Episode: Shreyas Doshi, Timestamp: 00:02:15].\n\n"
-            "### Actionable Recommendation\n"
-            "Audit your initial onboarding funnel this week: identify the single 'aha moment' and remove every intermediate form field that delays the user from reaching it."
+            f"Based on the discussions from Lenny's Podcast archive with **{guest}** regarding **{query}**:\n\n"
+            f"### 1. The Core Principle\n"
+            f"In the episode *\"{ep_name}\"*, **{guest}** emphasizes that sustainable growth is driven by operational rigor and clear customer understanding: "
+            f"*\"{clean_snippets[0][2][:160] if clean_snippets else primary['text'][:160]}...\"* "
+            f"[Episode: {guest}, Timestamp: {ts}]\n\n"
+            f"### 2. Tactical Execution\n"
+            f"{bullets_text}\n\n"
+            f"### Actionable Recommendation\n"
+            f"Review your team's current roadmap against {guest}'s framework: focus on high-leverage product loops and remove any vanity steps that delay time-to-value."
         )
 
-    def _build_ship30_essay(self, query: str) -> str:
+    def _build_ship30_essay(self, query: str, system_prompt: str = "") -> str:
+        chunks = self._parse_chunks_from_prompt(system_prompt) if system_prompt else []
+        guest = chunks[0]["guest"] if chunks else "Elena Verna"
+        ep_name = chunks[0]["episode"] if chunks else "B2B Growth Loops"
+        ts = chunks[0]["timestamp"] if chunks else "00:01:20"
+
         return (
-            "# The Hidden Levers of High-Impact Growth: Why Most PMs Optimize the Wrong Metrics\n\n"
-            "Most product leaders believe their biggest growth problem is acquisition.\n\n"
+            f"# The High-Agency Growth Playbook: Operational Lessons from {guest}\n\n"
+            "Most product leaders believe their biggest growth problem is top-of-funnel acquisition.\n\n"
             "They are wrong.\n\n"
-            "The real growth killer is the silent leak inside your activation funnel—the onboarding experience you built nine months ago and haven't touched since.\n\n"
-            "Here is the counterintuitive truth: **Onboarding is the only part of your entire product experience that 100% of your users will ever see.** [Episode: Adam Fishman, Timestamp: 00:00:00]. If your onboarding fails, every marketing dollar spent is wasted capital.\n\n"
+            f"As **{guest}** discusses on *Lenny's Podcast* [Episode: {guest}, Timestamp: {ts}], the real differentiator between stagnant products and compounding businesses is systematic execution and user activation.\n\n"
             "---\n\n"
-            "## 1. The Expectation Gap: Where Churn Actually Happens\n\n"
-            "Your marketing brand is a promise you make in the marketplace. Your onboarding is the delivery of that promise.\n\n"
-            "When those two elements diverge, users experience instant dissonance. They don't submit support tickets; they simply close the tab and never return.\n\n"
-            "- **Anchor 1: Measure Time-to-Value (TTV), not Completion Rate.** A user who completes 10 setup steps without experiencing the core outcome is still at risk of churn.\n"
-            "- **Anchor 2: Eliminate Vanity Setup Steps.** Ruthlessly remove profile photo uploads, notification permissions, and optional preferences before the first aha moment.\n"
-            "- **Anchor 3: Build for Intent-Driven Cohorts.** A self-serve individual needs an immediate dopamine hit; an enterprise admin needs team invite loops.\n\n"
+            "## 1. The Expectation Gap: Where Value Is Lost\n\n"
+            "Your marketing brand is a promise made in the market. Your product is the delivery of that promise.\n\n"
+            "When these two diverge, users experience instant friction. They don't file tickets; they simply churn.\n\n"
+            "- **Anchor 1: Measure Time-to-Value (TTV).** Focus ruthlessly on how many minutes elapse between first visit and core value.\n"
+            "- **Anchor 2: Eliminate Non-Essential Steps.** Strip away vanity onboarding forms, optional profiles, and premature setups.\n"
+            f"- **Anchor 3: Build Closed Loops.** Follow {guest}'s advice to turn active users into natural distribution loops rather than relying on linear paid ad spend [Episode: {guest}, Timestamp: {ts}].\n\n"
             "---\n\n"
-            "## 2. Transforming Funnels into Self-Sustaining Loops\n\n"
-            "Traditional funnels end at conversion. Modern growth leaders build closed compounding loops [Episode: Elena Verna, Timestamp: 00:01:20].\n\n"
-            "When an active user derives value from your product, that action should naturally generate an invitation, public artifact, or social proof that attracts the next cohort.\n\n"
-            "- **Viral Output:** Does the output of your product exist in public (e.g. shared dashboards, public documents, embeddable badges)?\n"
-            "- **Collaboration Triggers:** Can a user complete their workflow alone, or does the product become 10x better when colleagues join?\n"
-            "- **Re-engagement Hooks:** Are notifications tied to high-value user activity or generic marketing spam?\n\n"
+            "## 2. High-Agency Prioritization\n\n"
+            "Exceptional growth teams do not work longer hours; they allocate leverage ruthlessly.\n\n"
+            "1. **High-Leverage Bets:** Core activation and onboarding funnels where small metric lifts compound exponentially.\n"
+            "2. **Fast Feedback Iteration:** Testing assumptions with rapid user feedback rather than 6-month monolithic roadmaps.\n"
+            "3. **Operational Clarity:** Clear ownership across product, data, and engineering to eliminate cross-functional bottlenecks.\n\n"
             "---\n\n"
-            "## 3. High-Agency Prioritization: The LNO Framework\n\n"
-            "Great product managers do not work harder; they allocate leverage ruthlessly [Episode: Shreyas Doshi, Timestamp: 00:02:15].\n\n"
-            "Categorize your growth backlog into three buckets:\n"
-            "1. **Leverage Tasks (L):** Strategic onboarding overhauls and core loops where exceptional quality yields 10x returns.\n"
-            "2. **Neutral Tasks (N):** Standard feature maintenance where 'good enough' is sufficient.\n"
-            "3. **Overhead Tasks (O):** Administrative status meetings and paperwork that should be minimized or automated.\n\n"
-            "---\n\n"
-            "## The 7-Day Operational Checklist\n\n"
-            "- [ ] **Step 1:** Map your current onboarding funnel from landing page to core value event.\n"
-            "- [ ] **Step 2:** Calculate drop-off at every single step; flag any screen losing > 20% of traffic.\n"
-            "- [ ] **Step 3:** Conduct 5 user tests with first-time users observing where hesitation occurs.\n"
-            "- [ ] **Step 4:** Deploy a stripped-down flow removing at least 3 non-essential form fields.\n"
-            "- [ ] **Step 5:** Measure day-1 and day-7 retention lift.\n"
+            "## The 5-Step Operational Checklist\n\n"
+            "- [ ] **Step 1:** Map every screen from initial signup to core value delivery.\n"
+            "- [ ] **Step 2:** Identify the single biggest drop-off point in the funnel.\n"
+            "- [ ] **Step 3:** Eliminate at least two form fields or friction points this week.\n"
+            "- [ ] **Step 4:** Establish an automated tracking dashboard for activation rate.\n"
+            "- [ ] **Step 5:** Measure 7-day retention impact across the updated user cohort.\n"
         )
 
     def _build_artifact_response(self, query: str) -> str:

@@ -55,13 +55,13 @@ class OllamaProvider(BaseLLMProvider):
             "stream": True,
             "options": {
                 "temperature": temperature,
-                "num_ctx": 2048,
-                "num_predict": 512
+                "num_ctx": 1536,
+                "num_predict": 384
             }
         }
 
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=180.0) as client:
                 async with client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
                     if response.status_code != 200:
                         err_msg = f"[Notice: Ollama is running, but model '{self.model}' is not yet pulled (HTTP {response.status_code}). Run 'docker exec -it lenny_ollama ollama pull {self.model}' to enable local inference. Seamlessly serving via Resilient Demo Provider in the interim.]\n\n"
