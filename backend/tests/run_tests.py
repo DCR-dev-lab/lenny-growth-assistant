@@ -33,6 +33,7 @@ from tests.test_api import (
     test_chat_request_validation,
     test_session_create_default_title,
     test_session_create_custom_title,
+    test_session_model_persistence_structure,
 )
 
 async def run_all_tests():
@@ -48,6 +49,7 @@ async def run_all_tests():
         ("test_chat_request_validation", test_chat_request_validation),
         ("test_session_create_default_title", test_session_create_default_title),
         ("test_session_create_custom_title", test_session_create_custom_title),
+        ("test_session_model_persistence_structure", test_session_model_persistence_structure),
     ]
 
     async_tests = [

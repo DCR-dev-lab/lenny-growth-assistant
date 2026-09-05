@@ -54,7 +54,7 @@ class ResilientMockProvider(BaseLLMProvider):
 
     def _build_grounded_response(self, query: str, system_prompt: str) -> str:
         pm_keywords = ["onboarding", "growth", "pm", "product", "retention", "activation", "churn", "pricing", "loop", "funnel", "shreyas", "adam", "fishman", "elena", "brian", "interview", "team", "metric", "framework", "lno", "viral", "calculator", "strategy", "startup", "yc", "airbnb", "reforge"]
-        if not any(k in query.lower() for k in pm_keywords) or "--- Episode:" not in system_prompt:
+        if not any(k in query.lower() for k in pm_keywords) or "no sufficient context" in system_prompt.lower():
             return "I do not have sufficient information in Lenny's podcast archive to answer this. My knowledge base is strictly grounded in episodes with Adam Fishman, Elena Verna, Shreyas Doshi, Brian Chesky, and other growth leaders. Please try a question on onboarding, product strategy, retention, growth teams, or pricing."
 
         return (

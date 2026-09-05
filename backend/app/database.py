@@ -13,20 +13,24 @@ from app.config import get_settings
 logger = logging.getLogger("database")
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    future=True,
-    pool_size=10,
-    max_overflow=20
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False
-)
+try:
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        future=True,
+        pool_size=10,
+        max_overflow=20
+    )
+    AsyncSessionLocal = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False
+    )
+except Exception as e:
+    logger.warning(f"Async database engine initialization deferred: {e}")
+    engine = None
+    AsyncSessionLocal = None
 
 Base = declarative_base()
 
