@@ -156,7 +156,7 @@ pytest backend/tests -v
 | 3 | **Architecture Spec** | [`docs/architecture.md`](docs/architecture.md) | Database schemas, HNSW pgvector indexing, contracts, and security topology. |
 | 4 | **Design Spec** | [`docs/design.md`](docs/design.md) | UI/UX principles, interaction states, responsive behavior, and accessibility. |
 | 5 | **Agent Transcripts** | [`agent_transcripts/`](agent_transcripts/) | Engineering logs, debugging pgvector indexing, and environment resilience. |
-| 6 | **Demo Video Script** | [`docs/DEMO_VIDEO_SCRIPT.md`](docs/DEMO_VIDEO_SCRIPT.md) | 2–3 minute video outline and timestamped script for candidate submission. |
+| 6 | **Evaluator Walkthrough** | [`docs/EVALUATOR_WALKTHROUGH.md`](docs/EVALUATOR_WALKTHROUGH.md) | Step-by-step 2-minute verification guide covering ground truth, guardrails, and artifacts. |
 | 7 | **Tests** | [`backend/tests/`](backend/tests/) | 16 automated test suites + manual UI test plan. |
 
 ---
