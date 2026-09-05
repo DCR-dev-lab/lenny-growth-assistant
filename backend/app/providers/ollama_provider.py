@@ -53,7 +53,11 @@ class OllamaProvider(BaseLLMProvider):
             "model": self.model,
             "messages": [{"role": "system", "content": system_prompt}] + messages,
             "stream": True,
-            "options": {"temperature": temperature}
+            "options": {
+                "temperature": temperature,
+                "num_ctx": 2048,
+                "num_predict": 512
+            }
         }
 
         try:

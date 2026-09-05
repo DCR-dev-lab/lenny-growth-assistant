@@ -50,7 +50,7 @@ class Settings(BaseSettings):
         description="Minimum cosine similarity required to ground an answer (else refuse)"
     )
     TOP_K_RETRIEVAL: int = Field(
-        default=5,
+        default=3,
         description="Number of top chunks to retrieve per query"
     )
     EMBEDDING_DIM: int = Field(

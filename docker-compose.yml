@@ -40,7 +40,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       SIMILARITY_THRESHOLD: 0.60
-      TOP_K_RETRIEVAL: 5
+      TOP_K_RETRIEVAL: 3
     ports:
       - "8000:8000"
     depends_on:
