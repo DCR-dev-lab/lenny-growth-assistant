@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, BookOpen, PenTool, Loader2, Radio, Database, Zap } from "lucide-react";
+import { Send, Sparkles, BookOpen, PenTool, Loader2, Radio, Database, Zap, Rocket, FileText, Calculator, ShieldAlert } from "lucide-react";
 import MessageItem from "./MessageItem";
 import ModelSelector from "./ModelSelector";
 
@@ -21,24 +21,36 @@ const QUICK_PROMPTS = [
     mode: "default",
     category: "Tactical Onboarding",
     label: "Onboarding as a Growth Lever",
+    icon: Rocket,
+    iconColor: "text-purple-600 bg-purple-50 border-purple-100",
+    categoryColor: "text-purple-700 bg-purple-50 border-purple-200",
     prompt: "What does Adam Fishman say about why onboarding is the most critical part of the product experience?",
   },
   {
     mode: "ship30",
     category: "Executive Essay",
     label: "Ship 30: High-Agency PMs",
+    icon: FileText,
+    iconColor: "text-amber-600 bg-amber-50 border-amber-100",
+    categoryColor: "text-amber-700 bg-amber-50 border-amber-200",
     prompt: "Write a Ship 30 for 30 essay on Shreyas Doshi's LNO framework and high-agency product management.",
   },
   {
     mode: "default",
     category: "Interactive Tool",
     label: "Interactive Viral Calculator",
+    icon: Calculator,
+    iconColor: "text-indigo-600 bg-indigo-50 border-indigo-100",
+    categoryColor: "text-indigo-700 bg-indigo-50 border-indigo-200",
     prompt: "Generate an interactive HTML/CSS viral growth loop calculator for modeling activation and K-factor.",
   },
   {
     mode: "default",
     category: "Refusal Guardrail",
     label: "Out-of-Domain Guardrail Test",
+    icon: ShieldAlert,
+    iconColor: "text-rose-600 bg-rose-50 border-rose-100",
+    categoryColor: "text-rose-700 bg-rose-50 border-rose-200",
     prompt: "What is the best temperature and recipe for baking a sourdough bread loaf?",
   },
 ];
@@ -148,96 +160,111 @@ export default function ChatPane({
         </div>
       </header>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 max-w-4xl w-full mx-auto">
-        {messages.length === 0 && (
-          <div className="mt-4 mb-10 text-center animate-in fade-in duration-300">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-50 to-indigo-50 border border-brand-200 text-brand-600 flex items-center justify-center mx-auto mb-3.5 shadow-sm">
-              <Sparkles className="w-7 h-7 text-brand-600" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">The Lenny Growth Assistant</h2>
-            <p className="text-xs text-slate-500 max-w-lg mx-auto mt-1.5 mb-4 leading-relaxed">
-              Verifiable product management and growth tactics unlocked from <strong>Lenny&apos;s Podcast</strong> transcripts. Strictly grounded citations, Ship 30 for 30 essays, and Claude-style interactive artifacts.
-            </p>
+      {/* Messages Scroll Area - Full width scroll container so scrollbar is at the edge of the pane */}
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="max-w-4xl w-full mx-auto px-4 py-6 md:px-8">
+          {messages.length === 0 && (
+            <div className="mt-4 mb-8 text-center animate-in fade-in duration-300">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-50 to-indigo-50 border border-brand-200 text-brand-600 flex items-center justify-center mx-auto mb-3.5 shadow-sm">
+                <Sparkles className="w-7 h-7 text-brand-600" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">The Lenny Growth Assistant</h2>
+              <p className="text-xs text-slate-500 max-w-lg mx-auto mt-1.5 mb-4 leading-relaxed">
+                Verifiable product management and growth tactics unlocked from <strong>Lenny&apos;s Podcast</strong> transcripts. Strictly grounded citations, Ship 30 for 30 essays, and Claude-style interactive artifacts.
+              </p>
 
-            {/* Operator Chips */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-xl mx-auto mb-7">
-              <span className="text-[11px] text-slate-400 font-medium mr-1">Episodes:</span>
-              {FEATURED_OPERATORS.map((op, idx) => (
-                <span
-                  key={idx}
-                  className="text-[11px] font-medium bg-white text-slate-600 border border-slate-200/90 px-2.5 py-0.5 rounded-full shadow-2xs"
-                >
-                  {op}
-                </span>
-              ))}
-            </div>
+              {/* Operator Chips */}
+              <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-xl mx-auto mb-6">
+                <span className="text-[11px] text-slate-400 font-medium mr-1">Episodes:</span>
+                {FEATURED_OPERATORS.map((op, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[11px] font-medium bg-white text-slate-600 border border-slate-200/90 px-2.5 py-0.5 rounded-full shadow-2xs"
+                  >
+                    {op}
+                  </span>
+                ))}
+              </div>
 
-            {/* Quick Prompt Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto text-left">
-              {QUICK_PROMPTS.map((qp, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    onChangeMode(qp.mode);
-                    onSendMessage(qp.prompt);
-                  }}
-                  className="p-3.5 bg-white hover:bg-brand-50/40 border border-slate-200 hover:border-brand-300 rounded-2xl transition-all text-xs group shadow-2xs hover:shadow-xs cursor-pointer"
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-bold text-slate-800 group-hover:text-brand-700 transition-colors">
-                      {qp.label}
-                    </span>
-                    <span className="text-[10px] text-brand-700 bg-brand-50 border border-brand-200 px-2 py-0.5 rounded-md font-mono font-medium">
-                      {qp.category}
-                    </span>
+              {/* Quick Prompt Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto text-left">
+                {QUICK_PROMPTS.map((qp, i) => {
+                  const CardIcon = qp.icon;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        onChangeMode(qp.mode);
+                        onSendMessage(qp.prompt);
+                      }}
+                      className="p-4 bg-white hover:bg-slate-50/80 border border-slate-200 hover:border-brand-300 rounded-2xl transition-all duration-200 text-xs group shadow-2xs hover:shadow-xs hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center border ${qp.iconColor}`}>
+                              <CardIcon className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">
+                              {qp.label}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-medium border ${qp.categoryColor}`}>
+                            {qp.category}
+                          </span>
+                        </div>
+                        <p className="text-slate-500 line-clamp-2 leading-relaxed text-[11px]">{qp.prompt}</p>
+                      </div>
+                      <span className="text-[10px] text-brand-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity mt-2.5 flex items-center gap-1">
+                        <span>Click to run query</span> &rarr;
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Conversation Turns */}
+          {messages.map((msg, index) => (
+            <MessageItem
+              key={msg.id || index}
+              message={msg}
+              onOpenArtifact={onOpenArtifact}
+            />
+          ))}
+
+          {/* Live Streaming Assistant Message */}
+          {isStreaming && (
+            <div className="flex gap-3.5 justify-start mb-6 animate-in fade-in duration-150">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-700 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-sm mt-0.5">
+                <Sparkles className="w-4 h-4 animate-spin" />
+              </div>
+              <div className="max-w-[85%] flex-1">
+                {streamStatus && (
+                  <div className="flex items-center gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl mb-2.5 font-medium w-fit shadow-2xs">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>{streamStatus}</span>
                   </div>
-                  <p className="text-slate-500 line-clamp-2 leading-relaxed">{qp.prompt}</p>
-                </button>
-              ))}
+                )}
+                {streamingText && (
+                  <MessageItem
+                    message={{
+                      role: "assistant",
+                      content: streamingText,
+                      sources: currentSources,
+                      artifacts: [],
+                    }}
+                    onOpenArtifact={onOpenArtifact}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Conversation Turns */}
-        {messages.map((msg, index) => (
-          <MessageItem
-            key={msg.id || index}
-            message={msg}
-            onOpenArtifact={onOpenArtifact}
-          />
-        ))}
-
-        {/* Live Streaming Assistant Message */}
-        {isStreaming && (
-          <div className="flex gap-3.5 justify-start mb-6 animate-in fade-in duration-150">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-700 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-sm mt-0.5">
-              <Sparkles className="w-4 h-4 animate-spin" />
-            </div>
-            <div className="max-w-[85%] flex-1">
-              {streamStatus && (
-                <div className="flex items-center gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl mb-2.5 font-medium w-fit shadow-2xs">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>{streamStatus}</span>
-                </div>
-              )}
-              {streamingText && (
-                <MessageItem
-                  message={{
-                    role: "assistant",
-                    content: streamingText,
-                    sources: currentSources,
-                    artifacts: [],
-                  }}
-                  onOpenArtifact={onOpenArtifact}
-                />
-              )}
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Bottom Fixed Prompt Bar */}
@@ -255,17 +282,22 @@ export default function ChatPane({
                   ? "Enter a topic for a Ship 30 for 30 essay (e.g. Elena Verna on B2B product-led growth)..."
                   : "Ask a product or growth question grounded in Lenny's podcast archive..."
               }
-              className="auto-grow-input w-full pl-4 pr-32 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white resize-none shadow-2xs placeholder:text-slate-400 leading-relaxed transition-all"
+              className="auto-grow-input w-full pl-4 pr-36 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white resize-none shadow-2xs placeholder:text-slate-400 leading-relaxed transition-all"
             />
-            <div className="absolute right-2.5 flex items-center gap-1.5">
+            <div className="absolute right-2.5 flex items-center gap-2">
               {/* Quick Inline Mode Indicator / Toggle */}
               <button
                 type="button"
                 onClick={() => onChangeMode(currentMode === "default" ? "ship30" : "default")}
-                className="px-2 py-1 rounded-lg text-[10px] font-mono font-bold uppercase transition-colors bg-slate-200/70 hover:bg-brand-100 text-slate-700 hover:text-brand-800"
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
+                  currentMode === "ship30"
+                    ? "bg-amber-100 text-amber-800 border border-amber-200 shadow-2xs"
+                    : "bg-brand-50 text-brand-700 border border-brand-200 shadow-2xs"
+                }`}
                 title={`Current mode: ${currentMode === "default" ? "Grounded QA" : "Ship 30 for 30"}. Click to toggle.`}
               >
-                {currentMode === "default" ? "Mode: QA" : "Mode: Ship30"}
+                <span className={`w-1.5 h-1.5 rounded-full ${currentMode === "ship30" ? "bg-amber-500" : "bg-brand-600"}`} />
+                <span>{currentMode === "ship30" ? "Ship 30" : "QA"}</span>
               </button>
 
               {/* Send Button */}
@@ -281,7 +313,7 @@ export default function ChatPane({
           </form>
           <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
             <span>
-              Press <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Enter</kbd> to send, <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Shift+Enter</kbd> for newline
+              Mode: <strong className="text-slate-700 font-semibold">{currentMode === "ship30" ? "Ship 30 for 30 Essay" : "Grounded QA"}</strong> &bull; Press <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Enter</kbd> to send, <kbd className="font-mono bg-slate-100 border border-slate-200 px-1 py-0.2 rounded text-[10px] text-slate-600">Shift+Enter</kbd> for newline
             </span>
             <span className="flex items-center gap-1">
               <Zap className="w-3 h-3 text-amber-500" />
