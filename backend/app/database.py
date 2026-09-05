@@ -65,5 +65,17 @@ async def init_db():
                 WITH (m = 16, ef_construction = 64);
             """))
             logger.info("Database schema, pgvector extension, and HNSW index initialized successfully.")
+
+            # Auto-seed starter transcripts if running on a fresh empty database
+            chunk_check = await conn.execute(text("SELECT COUNT(*) FROM transcript_chunks;"))
+            chunk_count = chunk_check.scalar() or 0
+            if chunk_count == 0:
+                logger.info("Fresh database detected (0 transcript chunks). Initiating background starter ingestion...")
+                import asyncio
+                try:
+                    from scripts.ingest import ingest_transcripts
+                    asyncio.create_task(ingest_transcripts())
+                except Exception as seed_err:
+                    logger.warning(f"Could not auto-trigger ingestion on startup: {seed_err}")
     except Exception as e:
         logger.warning(f"Database initialization notice (DB might be connecting or migrating): {e}")
