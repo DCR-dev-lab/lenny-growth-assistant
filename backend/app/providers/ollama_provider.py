@@ -64,9 +64,13 @@ class OllamaProvider(BaseLLMProvider):
             async with httpx.AsyncClient(timeout=120.0) as client:
                 async with client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
                     if response.status_code != 200:
-                        err_msg = f"\n[Ollama Error: HTTP {response.status_code}. Is model '{self.model}' pulled? Run 'ollama pull {self.model}']"
-                        logger.error(err_msg)
+                        err_msg = f"[Notice: Ollama is running, but model '{self.model}' is not yet pulled (HTTP {response.status_code}). Run 'docker exec -it lenny_ollama ollama pull {self.model}' to enable local inference. Seamlessly serving via Resilient Demo Provider in the interim.]\n\n"
+                        logger.warning(err_msg)
                         yield err_msg
+                        from app.providers.mock_provider import ResilientMockProvider
+                        fallback = ResilientMockProvider()
+                        async for token in fallback.generate_response(messages, system_prompt, temperature):
+                            yield token
                         return
 
                     async for line in response.aiter_lines():
