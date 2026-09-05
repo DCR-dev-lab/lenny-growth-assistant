@@ -6,7 +6,7 @@
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%20(JavaScript)-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/Vector%20DB-PostgreSQL%20%2B%20pgvector-336791?style=flat&logo=postgresql)](https://github.com/pgvector/pgvector)
 [![Ollama](https://img.shields.io/badge/Local%20LLM-Ollama-purple?style=flat)](https://ollama.com/)
-[![Tests](https://img.shields.io/badge/Tests-15%20Passed%2C%200%20Failed-emerald?style=flat)]()
+[![Tests](https://img.shields.io/badge/Tests-16%20Passed%2C%200%20Failed-emerald?style=flat)]()
 
 ---
 
@@ -137,7 +137,7 @@ python backend/tests/run_tests.py
 # Or with pytest:
 pytest backend/tests -v
 ```
-**Results:** `15 PASSED, 0 FAILED`.
+**Results:** `16 PASSED, 0 FAILED`.
 
 ### Manual UI Test Plan
 1. **Grounded Query:** Ask *"What does Adam Fishman say about onboarding?"* -> Confirm citation `[Episode: Adam Fishman, Timestamp: 00:00:00]`.
@@ -152,9 +152,53 @@ pytest backend/tests -v
 | # | Deliverable | Location | Description |
 | :--- | :--- | :--- | :--- |
 | 1 | **Source Code** | `/backend`, `/frontend` | Complete full-stack implementation with clean separation of concerns. |
-| 2 | **PRD** | [`docs/PRD.md`](docs/PRD.md) | Persona, JTBD, measurable metrics, scope choices, and trade-offs. |
+| 2 | **PRD** | [`docs/PRD.md`](docs/PRD.md) | Persona, JTBD, measurable metrics, scope choices, risks, and implementation plan. |
 | 3 | **Architecture Spec** | [`docs/architecture.md`](docs/architecture.md) | Database schemas, HNSW pgvector indexing, contracts, and security topology. |
 | 4 | **Design Spec** | [`docs/design.md`](docs/design.md) | UI/UX principles, interaction states, responsive behavior, and accessibility. |
 | 5 | **Agent Transcripts** | [`agent_transcripts/`](agent_transcripts/) | Engineering logs, debugging pgvector indexing, and environment resilience. |
 | 6 | **Demo Video Script** | [`docs/DEMO_VIDEO_SCRIPT.md`](docs/DEMO_VIDEO_SCRIPT.md) | 2–3 minute video outline and timestamped script for candidate submission. |
-| 7 | **Tests** | [`backend/tests/`](backend/tests/) | 15 automated test suites + manual UI test plan. |
+| 7 | **Tests** | [`backend/tests/`](backend/tests/) | 16 automated test suites + manual UI test plan. |
+
+---
+
+## 9. Troubleshooting & Operational Runbook
+
+### 1. Ollama Model Pull & Readiness
+If local Ollama reports `model 'llama3.2:3b' not found`:
+```bash
+# Pull model directly inside the running container:
+docker exec -it lenny_ollama ollama pull llama3.2:3b
+
+# Or verify pulled models:
+docker exec -it lenny_ollama ollama list
+```
+
+### 2. Port Collision Resolution
+If ports `5432`, `8000`, `3000`, or `11434` are already bound on your host:
+- In `docker-compose.yml`, remap the host port (e.g. `"5433:5432"` or `"8001:8000"`).
+- Update `NEXT_PUBLIC_API_URL` accordingly in `.env`.
+
+### 3. Re-indexing Pgvector Knowledge Base
+To wipe and re-index the 8 starter episodes:
+```bash
+docker exec -it lenny_backend python scripts/ingest.py
+```
+
+### 4. Health Check Diagnostics
+Visit `http://localhost:8000/api/health` in your browser. A healthy payload returns:
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "pgvector": "293 chunks indexed",
+  "llm_provider": {
+    "provider": "ollama",
+    "available": true,
+    "model": "llama3.2:3b"
+  }
+}
+```
+
+### 5. Extending the System (New Episodes & Skills)
+- **Adding Episodes:** Place new `.txt` or `.md` transcript files into `data/transcripts/` and re-run `python scripts/ingest.py`.
+- **Adding Agent Skills:** Register a new skill module in `backend/app/skills/` and expose it via the router in `backend/app/api/chat.py`.

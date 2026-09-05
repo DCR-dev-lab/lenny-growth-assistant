@@ -174,6 +174,16 @@ class BaseLLMProvider(ABC):
 - **`OpenAIProvider`:** Connects to OpenAI API (`gpt-4o`).
 - **`ResilientMockProvider`:** Built-in offline fallback driver that generates high-fidelity grounded responses when external daemons are offline, guaranteeing reliable testing and evaluation.
 
+### 4.1 Agent Layer Architecture (Anthropic Agent SDK / Pi Coding Agent Pattern)
+
+The system implements the fundamental pattern of the **Anthropic Claude Agent SDK** and **Pi Coding Agent**:
+1. **Perception & State Loop:** Each session receives incoming turns, queries the persistence layer (`sessions`, `messages`), and constructs the dynamic conversational context.
+2. **Specialized Agent Skills / Tools:**
+   - `TranscriptRetriever`: Vector similarity search tool querying pgvector HNSW index.
+   - `Ship30Writer`: Essay synthesis skill enforcing high-retention structural heuristics (~1,250 words, hook, bold anchors, 5-point checklist).
+   - `ArtifactGenerator`: Deterministic parser isolating interactive HTML/CSS code or markdown into first-class artifact objects.
+3. **Structured Event Stream (SSE):** Rather than blocking, the agent emits lifecycle events (`status` -> `sources` -> `token` -> `artifact` -> `[DONE]`), providing immediate feedback to the evaluator.
+
 ---
 
 ## 5. Security & Isolation Specification
